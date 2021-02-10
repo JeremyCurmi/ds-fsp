@@ -2,6 +2,11 @@
 Football Score Predictor
 
 
+Link:
+http://football-data.co.uk/englandm.php
+https://github.com/llSourcell/Predicting_Winning_Teams/blob/master/Scraping%20and%20Cleaning.ipynb
+
+
 Column Info:
 
 Notes for Football Data
