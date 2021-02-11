@@ -183,7 +183,6 @@ class InputCleaner(DfTransformer):
     def get_year_from_date_col(self,col):
         return pd.DatetimeIndex(col).year  
 
-
     def get_month_from_date_col(self,col):
         return pd.DatetimeIndex(col).month
 
