@@ -21,3 +21,7 @@ def add_points_last_season_to_data(X: pd.DataFrame,
     X = X.merge(X_points[["AwayTeam",season_col,"TP"]],on=["AwayTeam",season_col], how="left")
     X = X.rename(columns = {"TP":"ATPLS"})
     return X
+
+def get_last_season_points_difference(X: pd.DataFrame):
+    X["DiffPLS"] = X["HTPLS"] - X["ATPLS"]
+    return X

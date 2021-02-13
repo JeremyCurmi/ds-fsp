@@ -1,5 +1,9 @@
 import pandas as pd
-import utils
+try:    
+    import pkg.analytics.utils as utils
+except:
+    import utils
+
 pd.options.mode.chained_assignment = None  # default="warn"
 
 def get_goals_scored(X: pd.DataFrame):
@@ -72,4 +76,9 @@ def get_goals_statistics(X: pd.DataFrame):
     X["HTGC"] = HTGC
     X["ATGC"] = ATGC
     
+    return X
+
+def get_goal_difference(X: pd.DataFrame):
+    X["HTGD"] = X["HTGS"] - X["HTGC"]
+    X["ATGD"] = X["ATGS"] - X["ATGC"]
     return X

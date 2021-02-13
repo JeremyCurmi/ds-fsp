@@ -33,3 +33,12 @@ def create_df_from_dict(teams: dict):
         df.index += 1
     
     return df
+
+
+def scale_features_by_a_specific_feature(X: pd.DataFrame, list_of_features, feature_scaler):
+    X[feature_scaler] = X[feature_scaler].astype(float)
+
+    for col in list_of_features:
+        X[col] = X[col]/X[feature_scaler]
+    
+    return X

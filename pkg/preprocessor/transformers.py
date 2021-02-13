@@ -1,10 +1,9 @@
 import re
-import warnings
+import sys
 import logging
+import warnings
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
-
 from sklearn import (
     base,
     compose,
@@ -12,6 +11,17 @@ from sklearn import (
     preprocessing,
     decomposition,
     feature_selection
+)
+
+sys.path.append("../analytics/")
+from pkg.analytics import (
+    utils,
+    goals,
+    points,
+    team_form,
+    last_season_points,
+    match_week,
+    streaks,
 )
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -192,4 +202,76 @@ class InputCleaner(DfTransformer):
     def get_feature_names(self):
         return self.columns
 
+class Remover(DfTransformer):
+    
+    def __init__(self, 
+                 feature_list: list, 
+                 validate_features: bool = True):    
 
+        self.feature_list = feature_list
+        self.columns = []
+    
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X, y=None):
+        X_tr = X.copy()
+        for feature in self.feature_list:
+            del X_tr[feature]
+        
+        # validate that test data and train data have the same features
+        X_tr = super().feature_validator(X_tr)
+        self.columns = X_tr.columns
+        return X_tr
+
+    def get_feature_names(self):
+            return self.columns
+
+class Analytics(DfTransformer):
+    def __init__(self, season_col):
+        # season_col is the column used to split the data for different seasons csvs
+        self.season_col = season_col
+        self.columns = []
+    
+    def fit(self, X, y=None):
+       return self
+   
+    def transform(self, X, y=None):
+        X_analytics = pd.DataFrame()
+        for season in X[self.season_col].unique():
+            X_tr = X[X[self.season_col]==season]
+            
+            X_tr = goals.get_goals_statistics(X_tr)
+            X_tr = points.get_agg_points(X_tr)
+            
+            X_tr = team_form.add_form_df(X_tr)
+            X_tr = match_week.get_match_week(X_tr)
+            
+            # compute form points
+            X_tr = team_form.get_last_5_games_form_points(X_tr)
+
+            # compute streak features
+            X_tr = streaks.get_streak_features(X_tr)
+
+            # compute goal difference features
+            X_tr = goals.get_goal_difference(X_tr)
+
+            # compute point difference
+            X_tr = points.get_point_difference(X_tr)
+            
+            # append dfs into one
+            X_analytics = X_analytics.append(X_tr)      
+            
+        # add last season points to data
+        X_analytics = last_season_points.add_points_last_season_to_data(X_analytics,self.season_col)
+
+        # compute the difference in last year points
+        X_analytics = last_season_points.get_last_season_points_difference(X_analytics)
+
+        # scale certain features by matchweek
+        X_analytics = utils.scale_features_by_a_specific_feature(X_analytics,["HTGD","ATGD","DiffPts","DiffFormPts","HTP","ATP"],"MW")
+        return X_analytics
+        
+        
+    def get_feature_names(self):
+        return self.columns

@@ -1,6 +1,10 @@
 import pandas as pd
-import points
-import utils
+try:
+    import pkg.analytics.utils as utils
+    import pkg.analytics.points as points
+except:
+    import utils
+    import points
 
 def get_form(X: pd.DataFrame, 
              num: int):

@@ -1,5 +1,8 @@
 import pandas as pd
-import utils
+try:    
+    import pkg.analytics.utils as utils
+except:
+    import utils
 
 def get_points(result: str):
     if result == "W":
@@ -58,4 +61,9 @@ def get_agg_points(X: pd.DataFrame):
     X["HTP"] = HTP
     X["ATP"] = ATP
     
+    return X
+
+def get_point_difference(X: pd.DataFrame):
+    X["DiffPts"] = X["HTP"] - X["ATP"]
+    X["DiffFormPts"] = X["HTFormPts"] - X["ATFormPts"]
     return X
