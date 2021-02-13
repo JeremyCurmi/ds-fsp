@@ -42,3 +42,14 @@ def scale_features_by_a_specific_feature(X: pd.DataFrame, list_of_features, feat
         X[col] = X[col]/X[feature_scaler]
     
     return X
+
+
+# get day, week, year from Date feature
+def get_year_from_date_col(col):
+        return pd.DatetimeIndex(col).year  
+
+def get_month_from_date_col(col):
+    return pd.DatetimeIndex(col).month
+
+def get_day_from_date_col(col):
+    return pd.DatetimeIndex(col).day

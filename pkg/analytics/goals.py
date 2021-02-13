@@ -6,19 +6,26 @@ except:
 
 pd.options.mode.chained_assignment = None  # default="warn"
 
-def get_goals_scored(X: pd.DataFrame):
+def get_goals_scored(X: pd.DataFrame, 
+                     half_time_result: bool = False):
     """ get goals scored aggregated by teams and matchweek """
-    
     
     teams = utils.create_team_dictionary(X)
     
     # get the value corresponding to keys in a list containing the match location
-    for i in range(len(X)):
-        HTGS = X.iloc[i]["FTHG"]
-        ATGS = X.iloc[i]["FTAG"]
-        teams[X.iloc[i].HomeTeam].append(HTGS)
-        teams[X.iloc[i].AwayTeam].append(ATGS)
-    
+    if half_time_result:
+        for i in range(len(X)):
+            HTGS = X.iloc[i]["HTHG"]
+            ATGS = X.iloc[i]["HTAG"]
+            teams[X.iloc[i].HomeTeam].append(HTGS)
+            teams[X.iloc[i].AwayTeam].append(ATGS)
+    else:
+        for i in range(len(X)):
+            HTGS = X.iloc[i]["FTHG"]
+            ATGS = X.iloc[i]["FTAG"]
+            teams[X.iloc[i].HomeTeam].append(HTGS)
+            teams[X.iloc[i].AwayTeam].append(ATGS)
+        
     max_len = utils.get_max_number_of_games_played(teams)
     GoalsScored = utils.create_df_from_dict(teams)
     GoalsScored = GoalsScored.T
@@ -29,15 +36,23 @@ def get_goals_scored(X: pd.DataFrame):
 
     return GoalsScored
 
-def get_goals_conceded(X: pd.DataFrame):
+def get_goals_conceded(X: pd.DataFrame, 
+                     half_time_result: bool = False):
     """ get goals conceded aggregated by teams and matchweek """
     teams = utils.create_team_dictionary(X)
 
-    for i in range(len(X)):
-        ATGC = X.iloc[i]["FTHG"]
-        HTGC = X.iloc[i]["FTAG"]
-        teams[X.iloc[i].HomeTeam].append(HTGC)
-        teams[X.iloc[i].AwayTeam].append(ATGC)
+    if half_time_result:
+        for i in range(len(X)):
+            ATGC = X.iloc[i]["FTHG"]
+            HTGC = X.iloc[i]["FTAG"]
+            teams[X.iloc[i].HomeTeam].append(HTGC)
+            teams[X.iloc[i].AwayTeam].append(ATGC)
+    else:
+        for i in range(len(X)):
+            ATGC = X.iloc[i]["HTHG"]
+            HTGC = X.iloc[i]["HTAG"]
+            teams[X.iloc[i].HomeTeam].append(HTGC)
+            teams[X.iloc[i].AwayTeam].append(ATGC)
 
     max_len = utils.get_max_number_of_games_played(teams)
     GoalsConceded = utils.create_df_from_dict(teams)
@@ -46,12 +61,13 @@ def get_goals_conceded(X: pd.DataFrame):
     
     for i in range(2,max_len):
         GoalsConceded[i] = GoalsConceded[i] + GoalsConceded[i-1]
-
     return GoalsConceded
     
-def get_goals_statistics(X: pd.DataFrame):
-    GC = get_goals_conceded(X)
-    GS = get_goals_scored(X)
+def get_goals_statistics(X: pd.DataFrame,
+                         half_time_result: bool = False):
+    
+    GC = get_goals_conceded(X,half_time_result)
+    GS = get_goals_scored(X,half_time_result)
 
     j = 1
     HTGS = []

@@ -81,7 +81,13 @@ class FeatureTransformer(DfTransformer):
         2. remainder -> {'drop','passthrough'}, if drop then return only defined features, if passthrough
         then the remaining features are concatendated with the output transformed features (to get all of the data).
     '''
-    def __init__(self, transformers, n_jobs=1, sparse_threshold=0.3, transformer_weights = None, verbose = False, remainder="passthrough"):
+    def __init__(self, 
+                 transformers: list, 
+                 n_jobs=1, 
+                 sparse_threshold=0.3, 
+                 transformer_weights = None, 
+                 verbose = False, 
+                 remainder="passthrough"):
         self.transformers = transformers
         self.remainder = remainder
         self.n_jobs = n_jobs
@@ -157,14 +163,6 @@ class InputCleaner(DfTransformer):
         # remove uni-valued features
         X_tr = self.drop_only_one_value_features(X_tr)
 
-        # fix date feature
-        X_tr["year"] = self.get_year_from_date_col(X_tr["Date"])
-        X_tr["month"] = self.get_month_from_date_col(X_tr["Date"])
-        X_tr["day"] = self.get_day_from_date_col(X_tr["Date"])
-
-        # remove Date feature
-        del X_tr["Date"]
-
         # validate that test data and train data have the same features
         X_tr = super().feature_validator(X_tr)
         self.columns = X_tr.columns
@@ -189,15 +187,6 @@ class InputCleaner(DfTransformer):
             warnings.warn(f'The following features: {one_value_feature_list} were removed because they contain only one value')
             
         return X[not_one_value_feature_list]
-    
-    def get_year_from_date_col(self,col):
-        return pd.DatetimeIndex(col).year  
-
-    def get_month_from_date_col(self,col):
-        return pd.DatetimeIndex(col).month
-
-    def get_day_from_date_col(self,col):
-        return pd.DatetimeIndex(col).day
 
     def get_feature_names(self):
         return self.columns
@@ -228,9 +217,12 @@ class Remover(DfTransformer):
             return self.columns
 
 class Analytics(DfTransformer):
-    def __init__(self, season_col):
+    def __init__(self, 
+                 season_col: str,
+                 half_time_result: bool = False):
         # season_col is the column used to split the data for different seasons csvs
         self.season_col = season_col
+        self.half_time_result = half_time_result
         self.columns = []
     
     def fit(self, X, y=None):
@@ -241,7 +233,7 @@ class Analytics(DfTransformer):
         for season in X[self.season_col].unique():
             X_tr = X[X[self.season_col]==season]
             
-            X_tr = goals.get_goals_statistics(X_tr)
+            X_tr = goals.get_goals_statistics(X_tr, self.half_time_result)
             X_tr = points.get_agg_points(X_tr)
             
             X_tr = team_form.add_form_df(X_tr)
@@ -270,8 +262,71 @@ class Analytics(DfTransformer):
 
         # scale certain features by matchweek
         X_analytics = utils.scale_features_by_a_specific_feature(X_analytics,["HTGD","ATGD","DiffPts","DiffFormPts","HTP","ATP"],"MW")
+        
+        # get date features
+        X_analytics["year"] = utils.get_year_from_date_col(X_analytics["Date"])
+        X_analytics["month"] = utils.get_month_from_date_col(X_analytics["Date"])
+        X_analytics["day"] = utils.get_day_from_date_col(X_analytics["Date"])
         return X_analytics
         
         
+    def get_feature_names(self):
+        return self.columns   
+    
+class CategoricalEncoder(DfTransformer):
+    '''
+        Categorical feature encoder
+    '''
+    def __init__(self, 
+                 method: str, 
+                 drop_first = None, 
+                 handle_unknown = "error",
+                 categories = "auto"):
+        
+        self.columns = []
+        self.method = method
+        self.drop_first = drop_first
+        self.handle_unknown = handle_unknown
+        self.categories = categories
+    
+    def fit(self,X, y=None):
+        if self.method == "nominal":
+            self.encoder =  preprocessing.OneHotEncoder(
+            drop = self.drop_first,
+            handle_unknown = self.handle_unknown,
+            dtype = int,
+            sparse = False,
+        ).fit(X)
+        elif self.method == "ordinal":
+            self.encoder = preprocessing.OrdinalEncoder(
+            categories = self.categories,
+            handle_unknown = self.handle_unknown,
+            dtype = int,
+        ).fit(X)
+            
+        return self
+    
+    def transform(self, X, y=None):
+        X_tr = X.copy()            
+        if self.method == 'nominal':
+            X_tr = self.nominal_transformation(X_tr, y)
+        elif self.method == 'ordinal':
+            X_tr = self.ordinal_transformation(X_tr, y)
+            
+        return X_tr
+    
+    def nominal_transformation(self, X, y = None):
+        X_tr = self.encoder.transform(X)
+        self.columns = self.encoder.get_feature_names(X.columns)
+        X_tr = pd.DataFrame(X_tr,columns = self.columns)
+        return X_tr
+    
+    def ordinal_transformation(self, X, y = None):
+        X_tr = self.encoder.transform(X)
+        X_tr = pd.DataFrame(X_tr, index = X.index, columns = X.columns)
+        self.columns = X_tr.columns
+        return X_tr
+
+    
     def get_feature_names(self):
         return self.columns
