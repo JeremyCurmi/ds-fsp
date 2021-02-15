@@ -56,6 +56,9 @@ def get_form_points(form_string: str):
     return sum 
 
 def get_last_5_games_form_points(X: pd.DataFrame):
+    """
+        Calculate points of last 5 games i.e. WWWWWW -> 15 for both HT and AT
+    """
     X["HTFormPtsStr"] = X["HM1"] + X["HM2"] + X["HM3"] + X["HM4"] + X["HM5"]
     X["ATFormPtsStr"] = X["AM1"] + X["AM2"] + X["AM3"] + X["AM4"] + X["AM5"]
 
