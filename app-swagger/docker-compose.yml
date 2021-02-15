@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+  ml-swagger-app:
+    image: jman081894/ds-fsp-swagger:1
+    ports:
+    - '8000:8000'

@@ -71,7 +71,7 @@ class DfTransformer(base.BaseEstimator, base.TransformerMixin):
         return X
     
 class FeatureTransformer(DfTransformer):
-    '''
+    """
         The Role of this Transformer is to apply transformations to specific features only.
         params:
         1. transformers -> a list of tuples in the form (name,transformer,features), specifying 
@@ -80,7 +80,7 @@ class FeatureTransformer(DfTransformer):
             columns by name or type
         2. remainder -> {'drop','passthrough'}, if drop then return only defined features, if passthrough
         then the remaining features are concatendated with the output transformed features (to get all of the data).
-    '''
+    """
     def __init__(self, 
                  transformers: list, 
                  n_jobs=1, 
@@ -274,9 +274,9 @@ class Analytics(DfTransformer):
         return self.columns   
     
 class CategoricalEncoder(DfTransformer):
-    '''
+    """
         Categorical feature encoder
-    '''
+    """
     def __init__(self, 
                  method: str, 
                  drop_first = None, 
